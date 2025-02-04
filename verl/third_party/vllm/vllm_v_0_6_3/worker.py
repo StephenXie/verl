@@ -127,6 +127,7 @@ class Worker(Worker):
             prompt_adapter_config=prompt_adapter_config,
             **speculative_args,
         )
+        print("self.model_runner.model", self.model_runner.model)
 
         # Uninitialized cache engine. Will be initialized by
         # initialize_cache.
@@ -276,6 +277,8 @@ class Worker(Worker):
             load_megatron_weights(actor_weights, self.model_runner.model)
         elif load_format == LoadFormat.HF:
             # full model state dict without no sharding
+            # import ipdb; ipdb.set_trace()
+            print("self.model_runner.model", self.model_runner.model)
             load_hf_weights(actor_weights, self.model_runner.model)
         elif load_format == LoadFormat.DTENSOR:
             load_dtensor_weights(actor_weights, self.model_runner.model)

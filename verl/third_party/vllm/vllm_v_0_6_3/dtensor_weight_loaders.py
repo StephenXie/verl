@@ -179,6 +179,8 @@ def qwen2_dtensor_weight_loader(actor_weights: Dict, vllm_model: nn.Module) -> n
             # Skip loading extra bias for GPTQ models.
             if name.endswith(".bias") and name not in params_dict:
                 continue
+            if name.startswith('base_model'):
+                name = name.replace('base_model.model.model', 'model')
             param = params_dict[name]
             local_loaded_weight = redistribute_dtensor(param_name=name, loaded_weights=loaded_weight)
             weight_loader = getattr(param, "weight_loader", default_weight_loader)
@@ -216,6 +218,8 @@ def qwen2vl_dtensor_weight_loader(actor_weights: Dict, vllm_model: nn.Module) ->
             # Skip loading extra bias for GPTQ models.
             if name.endswith(".bias") and name not in params_dict:
                 continue
+            if name.startswith('base_model'):
+                name = name.replace('base_model.model.model', 'model')
             param = params_dict[name]
             local_loaded_weight = redistribute_dtensor(param_name=name, loaded_weights=loaded_weight)
             weight_loader = getattr(param, "weight_loader", default_weight_loader)

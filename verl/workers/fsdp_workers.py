@@ -327,22 +327,24 @@ class ActorRolloutRefWorker(Worker):
             rollout = vLLMRollout(actor_module=self.actor_module_fsdp,
                                   config=self.config.rollout,
                                   tokenizer=self.tokenizer,
-                                  model_hf_config=self.actor_model_config)
+                                  model_hf_config=self.actor_model_config) 
             log_gpu_memory_usage('After building vllm rollout', logger=None)
-            if torch.distributed.get_world_size() == 1:
-                self.config.rollout.load_format = 'dummy_hf'
+            print("load_format", self.config.rollout.load_format)
+            # if torch.distributed.get_world_size() == 1:
+            #     self.config.rollout.load_format = 'hf'
             rollout_sharding_manager = FSDPVLLMShardingManager(module=self.actor_module_fsdp,
                                                                inference_engine=rollout.inference_engine,
                                                                model_config=self.actor_model_config,
                                                                full_params='hf' in self.config.rollout.load_format,
                                                                device_mesh=rollout_device_mesh)
             log_gpu_memory_usage('After building sharding manager', logger=None)
-
+ 
         return rollout, rollout_sharding_manager
 
     @register(dispatch_mode=Dispatch.ONE_TO_ALL)
     def init_model(self):
         from verl.workers.actor import DataParallelPPOActor
+        from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
         # This is used to import external_lib into the huggingface systems
         import_external_libs(self.config.model.get('external_lib', None))
 
@@ -393,12 +395,14 @@ class ActorRolloutRefWorker(Worker):
             if self._is_lora:
                 print("Merge adapter")
                 print(self.actor_module_fsdp._fsdp_wrapped_module)
-                import ipdb; ipdb.set_trace()
-                self.actor_module_fsdp.merge_adapter()
+                # import ipdb; ipdb.set_trace()
+                with FSDP.summon_full_params(self.actor_module_fsdp):
+                    self.actor_module_fsdp.merge_adapter()
             self.rollout, self.rollout_sharding_manager = self._build_rollout()
             if self._is_lora:
                 print("Unmerge adapter")
-                self.actor_module_fsdp.unmerge_adapter()
+                with FSDP.summon_full_params(self.actor_module_fsdp):
+                    self.actor_module_fsdp.unmerge_adapter()
 
         if self._is_ref:
             self.ref_module_fsdp = self._build_model_optimizer(model_path=self.config.model.path,

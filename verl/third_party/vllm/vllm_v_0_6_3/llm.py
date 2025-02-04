@@ -194,7 +194,7 @@ class LLM(LLM):
         return output_token_ids, logprobs
 
     def sync_model_weights(self, actor_weights: Dict[str, torch.Tensor], load_format: str) -> None:
-        self.llm_engine.sync_model_weights(actor_weights=actor_weights, load_format=load_format)
+        self.llm_engine.sync_model_weights(actor_weights=actor_weights, load_format="hf")
 
     def offload_model_weights(self) -> None:
         self.llm_engine.offload_model_weights()

@@ -40,7 +40,9 @@ def get_model(
     lora_config: Optional[LoRAConfig],
     cache_config: CacheConfig = None,
 ) -> nn.Module:
+    load_config.load_format = 'hf'
     loader = get_model_loader(load_config)
+    print("load_config format", load_config)
     if load_config.load_format.startswith("dummy"):
         return loader.load_model(
             model_config=model_config,
